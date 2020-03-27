@@ -9,7 +9,7 @@ supports the extensions to add such functionality to the application.
 
 Q. What is WSGI?
 A. Web Server Gateway Interface(WSGI) has been adopted as a standard Python
-wweb application development. WSGI is a specification for a universal interface
+web application development. WSGI is a specification for a universal interface
 between the web server and web application.
 
 Q. What is Werkzug?

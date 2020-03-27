@@ -1,0 +1,646 @@
+-> app = Flask(__name__)
+Flask constructor takes the name of current module(__name__)
+as argument.
+
+
+
+-> app.route(rule,options)
+The route() function of the Flask class is a decorator, which tells
+the application which URL should call the associated function
+
+Modern web frameworks use the routing technique to help a user remember application URLs.
+It is useful to access the desired page directly without having to navigate from the home page.
+
+The route() decorator in Flask is used to bind URL to a function.
+
+There are two parameters:
+    1. rule - The rule parameter represents URL binding with the funcion
+    2. options - The options is a list of parameters to be forwarded to the underlying 
+                Rule object.
+
+e.g:
+@app.route(‘/hello’)
+def hello_world():
+   return ‘hello world’
+
+URL ‘/hello’ rule is bound to the hello_world() function. As a result, if a user 
+visits http://localhost:5000/hello URL, the output of the hello_world() function 
+will be rendered in the browser.
+
+
+
+-> app.run(host,port,debug,options)
+The run() method of flask class runs the application on the local development server
+
+All the parameters are optional:
+    1. host - Hostname to listen on. Defaults to 127.0.0.1(localhost). Set to '0.0.0.0' 
+                to have server available externally
+    2. port - Defaults to 5000
+    3. debug - Defaults to False. If true, provides debug info.
+    4. options - To be forwarded to underlying Werkzeug server.
+
+
+
+
+-> app.add_url_rule()
+the add_url_rule() function of an application object is also available to bind a URL with a function
+
+e.g:
+def hello_world():
+   return ‘hello world’
+app.add_url_rule(‘/’, ‘hello’, hello_world)
+
+
+
+
+-> 'Dynamic URL'
+It is possible to build a URL dynamically, by adding variable parts to the rule parameter.
+THis variable part os marked as <variable-name>. It is passed as a keyword argument to the 
+function with which the rule is associated.
+
+e.g:
+@app.route('/hello/<name>')
+def hello_name(name):
+   return 'Hello %s!' % name
+
+Apart from strings these converters are also supported:
+1. int
+2. float
+3. path
+
+e.g.:
+@app.route('/blog/<int:postID>')
+def show_blog(postID):
+   return 'Blog Number %d' % postID
+
+@app.route('/rev/<float:revNo>')
+def revision(revNo):
+   return 'Revision Number %f' % revNo
+
+The URL rules of Flask are based on Werkzeug’s routing module.
+This ensures that the URLs formed are unique and based on precedents
+laid down by Apache.
+
+
+
+
+-> url_for()
+The url_for() function is very useful for dynamically building a URL 
+for a specific function. The function accepts the name of a function 
+as first argument, and one or more keyword arguments, each corresponding to the variable part of URL.
+
+e.g.:
+from flask import Flask, redirect, url_for
+app = Flask(__name__)
+
+@app.route('/admin')
+def hello_admin():
+   return 'Hello Admin'
+
+@app.route('/guest/<guest>')
+def hello_guest(guest):
+   return 'Hello %s as Guest' % guest
+
+@app.route('/user/<name>')
+def hello_user(name):
+   if name =='admin':
+      return redirect(url_for('hello_admin'))
+   else:
+      return redirect(url_for('hello_guest',guest = name))
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+
+The User() function checks if an argument received matches 
+‘admin’ or not. If it matches, the application is redirected 
+to the hello_admin() function using url_for(), otherwise to the 
+hello_guest() function passing the received argument as guest parameter to it.
+
+
+
+
+-> 'HTTP Methods- GET/POST'
+1. GET - sends data in unencryted form to the server. Most common method.
+2. HEAD - Same as GET, but without response body
+3. POST- Used to send HTML form data to server. Data received by POST method is not
+           cached by server.
+4. PUT - Replaces all current representations of the target resource with the uploaded 
+            content.
+5. DELETE - Removes all the current representations of the target resource given by a URL.
+
+By default, the Flask route responds to the GET requests. However, this preference can be 
+altered by providing methods argument to route() decorator.
+
+e.g.:
+#HTMl - login.html
+<html>
+   <body>
+      <form action = "http://localhost:5000/login" method = "post">
+         <p>Enter Name:</p>
+         <p><input type = "text" name = "nm" /></p>
+         <p><input type = "submit" value = "submit" /></p>
+      </form>
+   </body>
+</html>
+
+#hello.py
+from flask import Flask, redirect, url_for, request
+app = Flask(__name__)
+
+@app.route('/success/<name>')
+def success(name):
+   return 'welcome %s' % name
+
+@app.route('/login',methods = ['POST', 'GET'])
+def login():
+   if request.method == 'POST':
+      user = request.form['nm']
+      return redirect(url_for('success',name = user))
+   else:
+      user = request.args.get('nm')
+      return redirect(url_for('success',name = user))
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+http://localhost/login is mapped to the login() function. 
+Since the server has received data by POST method, value of ‘nm’ parameter 
+obtained from the form data is obtained by −
+
+user = request.form['nm']
+It is passed to ‘/success’ URL as variable part.
+The browser displays a welcome message in the window.
+
+Changing the method parameter to ‘GET’ in login.html and 
+open it again in the browser. The data received on server is by the GET method. 
+The value of ‘nm’ parameter is now obtained by −
+
+User = request.args.get(‘nm’)
+Here, args is dictionary object containing a list of pairs of form parameter and 
+its corresponding value. The value corresponding to ‘nm’ parameter is passed on 
+to ‘/success’ URL as before.
+
+
+
+
+-> 'FLASK TEMPLATES'
+
+It is possible to return the output of a function bound to a certain URL in the form of
+HTML.
+
+e.g.:
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+   return '<html><body><h1>Hello World</h1></body></html>'
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+Generating HTMl content from python code is cumbersome, especially
+when variable data and Python language elements like conditionals
+or loops need to be put This require frequent escaping from HTML.
+
+Jinja2 template helps in this. Instead of returning hardcode HTML from the function, 
+a HTML file can be rendered by the render_template() function.
+
+e.g.:
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+   return render_template(‘hello.html’)
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+FLask will try to find the HTML file in the 'templates' folder, in the same folder
+in which this script is present.
+
+The term 'web templating system' refers to designing an HTML script in which the variable
+data can be inserted dynamically. A web template system comprises of a template engine, some
+kind of data source and a template processor.
+
+Flask uses Jinja2 template engine. A web template contains HTML syntax interspersed 
+placeholders for variables and expressions (in these case Python expressions) which are 
+replaced values when the template is rendered.
+
+e.g.:
+#HTML
+<!doctype html>
+<html>
+   <body>
+   
+      <h1>Hello {{ name }}!</h1>
+      
+   </body>
+</html>
+
+#Flask
+
+from flask import Flask, render_template
+app = Flask(__name__)
+
+@app.route('/hello/<user>')
+def hello_name(user):
+   return render_template('hello.html', name = user)
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+*****Jinja2****
+The Jinja2 template engine uses the following delimiters for escaping
+from HTML
+1. {%...%} for Statements e.g. loops, conditionals
+2. {{...}} for expressions to print to the template output
+3. {#...#} for comments not included in the template output
+4. #...## for LIne Statements
+
+Another eg.:
+#FLASK
+from flask import Flask, render_template
+app = Flask(__name__)
+
+@app.route('/result')
+def result():
+   dict = {'phy':50,'che':60,'maths':70}
+   return render_template('result.html', result = dict)
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+#HTML
+<!doctype html>
+<html>
+   <body>
+      <table border = 1>
+         {% for key, value in result.items() %}
+            <tr>
+               <th> {{ key }} </th>
+               <td> {{ value }} </td>
+            </tr>
+         {% endfor %}
+      </table>
+   </body>
+</html>
+
+
+
+
+-> 'Flask -Static files like css and js'
+Static files can be served from static folder.
+A special endpoint 'static' is used to generate URL for static files.
+
+e.g.:
+#FLASK
+from flask import Flask, render_template
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+   return render_template("index.html")
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+#HTML
+<html>
+   <head>
+      <script type = "text/javascript" 
+         src = "{{ url_for('static', filename = 'hello.js') }}" ></script>
+   </head>
+   
+   <body>
+      <input type = "button" onclick = "sayHello()" value = "Say Hello" />
+   </body>
+</html>
+
+#js
+function sayHello() {
+   alert("Hello World")
+}
+
+
+
+
+-> 'FLASK- Request object'
+The data from a client's web page is sent to the server as a global request object.
+In order to process the request data, it should be imported from the flask module.
+
+1. Form - it is a dictionary object containing key and value pairs of form parameters 
+and their values.
+
+2. args - parsed contents of query string ehich is part of URL after question mark(?)
+
+3.Cookies - dictionary object holding Cookie names and values
+4. Files - data pertaining to uploaded file
+5.method- current request method.
+
+
+
+
+-> 'Flask – Sending Form Data to Template'
+The results() function collects form data present in request.form in a dictionary object and sends it for rendering to result.html.
+e.g.:
+#FLASK
+from flask import Flask, render_template, request
+app = Flask(__name__)
+
+@app.route('/')
+def student():
+   return render_template('student.html')
+
+@app.route('/result',methods = ['POST', 'GET'])
+def result():
+   if request.method == 'POST':
+      result = request.form
+      return render_template("result.html",result = result)
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+#student.html
+<html>
+   <body>
+      <form action = "http://localhost:5000/result" method = "POST">
+         <p>Name <input type = "text" name = "Name" /></p>
+         <p>Physics <input type = "text" name = "Physics" /></p>
+         <p>Chemistry <input type = "text" name = "chemistry" /></p>
+         <p>Maths <input type ="text" name = "Mathematics" /></p>
+         <p><input type = "submit" value = "submit" /></p>
+      </form>
+   </body>
+</html>
+
+#result.html
+<!doctype html>
+<html>
+   <body>
+      <table border = 1>
+         {% for key, value in result.items() %}
+            <tr>
+               <th> {{ key }} </th>
+               <td> {{ value }} </td>
+            </tr>
+         {% endfor %}
+      </table>
+   </body>
+</html>
+
+
+
+
+->'FLASK-Cookies'
+A cookie is stored on a client's computer in the form 
+of a text file. Its purpose is to remember and track data 
+pertaining to a client's usagefor better visitor experience and site statistics.
+
+A request object contains a cookie's attribute. It is a dictionary object
+of all the cookie variables and theor corrsponding values, a client has transmitted.
+In addition to it, a cookie also stores its expiry time, path and domain name
+of the site.
+
+Use make_response() function to get response object from return value of a view 
+function. After that, use the set_cookie() function of response object to store a cookie.
+
+Reading back a cookie is easy. The get() method of request.cookies attribute is used to read a cookie.
+
+e.g.:
+@app.route('/')
+def index():
+   return render_template('index.html')
+
+<html>
+   <body>
+      <form action = "/setcookie" method = "POST">
+         <p><h3>Enter userID</h3></p>
+         <p><input type = 'text' name = 'nm'/></p>
+         <p><input type = 'submit' value = 'Login'/></p>
+      </form>
+   </body>
+</html>
+
+@app.route('/setcookie', methods = ['POST', 'GET'])
+def setcookie():
+   if request.method == 'POST':
+   user = request.form['nm']
+   
+   resp = make_response(render_template('readcookie.html'))
+   resp.set_cookie('userID', user)
+   
+   return resp
+
+@app.route('/getcookie')
+def getcookie():
+   name = request.cookies.get('userID')
+   return '<h1>welcome '+name+'</h1>'
+
+
+
+
+-> 'FLASk- Sessions'
+Session is the time interval when a client logs into the server
+and logs out of it. The data, which is needed tto be held across 
+this session, is stored in the client browser.
+
+A Session with each client is assigned a Session ID. The Session data 
+is stored on top of Cookies and the server signs them cryptographically.
+For this encryption, a Flask application needs a defined SECRET_KEY.
+
+Session object is also a dictionary object containing key-value
+pairs of session variables and associated values.
+e.g. Session['username'] = 'admin'
+
+e.g:
+#FLASk
+from flask import Flask, session, redirect, url_for, escape, request
+app = Flask(__name__)
+app.secret_key = 'any random string’
+
+@app.route('/')
+def index():
+   if 'username' in session:
+      username = session['username']
+         return 'Logged in as ' + username + '<br>' + \
+         "<b><a href = '/logout'>click here to log out</a></b>"
+   return "You are not logged in <br><a href = '/login'></b>" + \
+      "click here to log in</b></a>"
+   
+@app.route('/login', methods = ['GET', 'POST'])
+def login():
+   if request.method == 'POST':
+      session['username'] = request.form['username']
+      return redirect(url_for('index'))
+   return '''
+	
+   <form action = "" method = "post">
+      <p><input type = text name = username/></p>
+      <p<<input type = submit value = Login/></p>
+   </form>
+	
+   '''
+
+@app.route('/logout')
+def logout():
+   # remove the username from the session if it is there
+   session.pop('username', None)
+   return redirect(url_for('index'))
+
+As user browses to ‘/login’ the login() view function, 
+because it is called through GET method, opens up a login form.
+
+A Form is posted back to ‘/login’ and now session variable is set. 
+Application is redirected to ‘/’. This time session variable ‘username’ is found.
+
+The application also contains a logout() view function, which pops out ‘username’
+session variable. Hence, ‘/’ URL again shows the opening page.
+
+
+
+
+->'FLASK- Redirect & Errors'
+Flask.redirect(location,statuscode,response)
+
+Flask class has a redirect() function. When called, it returns a response
+object and redirects the user to another target location with specified 
+status code.
+
+Three parameters are there:
+1. location - parameter is the URL where response should be redirected
+2. statuscode - sent to browser's header, defaults to 302.
+3. response - parameter is used to instantiate response.
+
+The following status codes are standardized −
+
+HTTP_300_MULTIPLE_CHOICES
+HTTP_301_MOVED_PERMANENTLY
+HTTP_302_FOUND
+HTTP_303_SEE_OTHER
+HTTP_304_NOT_MODIFIED
+HTTP_305_USE_PROXY
+HTTP_306_RESERVED
+HTTP_307_TEMPORARY_REDIRECT
+The default status code is 302, which is for ‘found’.
+
+e.g.:
+from flask import Flask, redirect, url_for, render_template, request
+# Initialize the Flask application
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+   return render_template('log_in.html')
+
+@app.route('/login',methods = ['POST', 'GET']) 
+def login(): 
+   if request.method == 'POST' and request.form['username'] == 'admin' :
+      return redirect(url_for('success'))
+   else:
+      return redirect(url_for('index'))
+
+@app.route('/success')
+def success():
+   return 'logged in successfully'
+	
+if __name__ == '__main__':
+   app.run(debug = True)
+
+
+
+
+->Flask.abort(code)
+Flask class has abort() funcion with an error code.
+The Code parameter takes one of following values −
+
+400 − for Bad Request
+401 − for Unauthenticated
+403 − for Forbidden
+404 − for Not Found
+406 − for Not Acceptable
+415 − for Unsupported Media Type
+429 − Too Many Requests
+
+e.g:
+from flask import Flask, redirect, url_for, render_template, request, abort
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+   return render_template('log_in.html')
+
+@app.route('/login',methods = ['POST', 'GET'])
+def login():
+   if request.method == 'POST':
+      if request.form['username'] == 'admin' :
+         return redirect(url_for('success'))
+      else:
+         abort(401)
+   else:
+      return redirect(url_for('index'))
+
+@app.route('/success')
+def success():
+   return 'logged in successfully'
+
+if __name__ == '__main__':
+   app.run(debug = True)
+
+
+
+
+->'Flask-File uploading'
+
+Handling file upload in Flask is very easy. It needs 
+an HTML form with its enctype attribute to 'multipart/form-data',
+posting the file to a URL. The URL handler fetches file from 
+request.files[] object and saves it to the desired location.
+
+Each uploaded file is first saved in a temporary location on 
+the server, before it is actually saved to its ultimate location.
+Name of destination file can be hard-coded or can be obtained from
+filename property of request.files[file] object. However, it is 
+recommended to obtain secured version of it using the secure_filename()
+function.
+
+Its possible to define the path of deefault upload folder and maximum
+size of uploaed file in configuration settings of Flask object.
+
+1. app.config['UPLOAD_FOLDER'] -  Defines path for upload folder
+2. app.config['MAX_CONTENT_PATH'] - Specifies maaximum size of file to be 
+                                    uploaded(in bytes)
+
+e.g.:
+
+#upload.html
+<html>
+   <body>
+      <form action = "http://localhost:5000/uploader" method = "POST" 
+         enctype = "multipart/form-data">
+         <input type = "file" name = "file" />
+         <input type = "submit"/>
+      </form>
+   </body>
+</html>
+
+#FLASK
+from flask import Flask, render_template, request
+from werkzeug import secure_filename
+app = Flask(__name__)
+
+@app.route('/upload')
+def upload_file():
+   return render_template('upload.html')
+	
+@app.route('/uploader', methods = ['GET', 'POST'])
+def upload_file():
+   if request.method == 'POST':
+      f = request.files['file']
+      f.save(secure_filename(f.filename))
+      return 'file uploaded successfully'
+		
+if __name__ == '__main__':
+   app.run(debug = True)

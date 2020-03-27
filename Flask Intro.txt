@@ -1,0 +1,22 @@
+Q. What is Flask?
+A. Flask is a web application framework written in Python by Armin Ronacher.
+It is based on the Werkzug WSGI toolkit and Jinja2 template engine.
+
+Flask is often referred to as a micro framework. It aims to keep the core of an 
+application  simple yet extensible. Flask does not have built-in abstraction layer 
+for  database handling, nor does it have form a validation support. Instead, Flask 
+supports the extensions to add such functionality to the application. 
+
+Q. What is WSGI?
+A. Web Server Gateway Interface(WSGI) has been adopted as a standard Python
+wweb application development. WSGI is a specification for a universal interface
+between the web server and web application.
+
+Q. What is Werkzug?
+A. It is a WSGI toolkit, which implements requests, response objects, and other 
+utility functions. This enables building a web framework on top of it. 
+The Flask framework uses Werkzeug as one of its bases.
+
+Q. What is Jinja2?
+A. Jinja2 is a popular templating engine for Python. A web templating system combines
+a template with a certain data source to render dynamic web pages.
